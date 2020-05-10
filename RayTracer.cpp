@@ -174,10 +174,10 @@ void initialize()
 	// sphere4->setShininess(5);
 	sceneObjects.push_back(sphere4);
 
-	Plane *plane = new Plane(glm::vec3(-20, -15, -40),
-							 glm::vec3(20, -15, -40),
-							 glm::vec3(20, -15,-200),
-							 glm::vec3(-20, -15, -200));
+	Plane *plane = new Plane(glm::vec3(-100, -15, -40),
+							 glm::vec3(100, -15, -40),
+							 glm::vec3(100, -15,-400),
+							 glm::vec3(-100, -15, -400));
 	plane->setSpecularity(false);
 	sceneObjects.push_back(plane);
 }
