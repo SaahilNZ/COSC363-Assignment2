@@ -80,10 +80,22 @@ glm::vec3 trace(Ray ray, int step)
 	shadowRay.closestPt(sceneObjects);
 	if (shadowRay.index > -1 && shadowRay.dist < glm::length(lightVec))
 	{
-		color = glm::vec3(
-			0.2 * obj->getColor().r,
-			0.2 * obj->getColor().g,
-			0.2 * obj->getColor().b);
+		SceneObject* hitObject = sceneObjects[shadowRay.index];
+		if (hitObject->isTransparent())
+		{
+			glm::vec3 hitCol = hitObject->getColor();
+			color = glm::vec3(
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * color.r + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.r)),
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * color.g + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.g)),
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * color.b + ((1 - hitObject->getReflectionCoeff()) * 0.5 * hitCol.b)));
+		}
+		else
+		{
+			color = glm::vec3(
+				0.2 * obj->getColor().r,
+				0.2 * obj->getColor().g,
+				0.2 * obj->getColor().b);	
+		}
 	}
 
 	if (obj->isReflective() && step < MAX_STEPS)
@@ -94,6 +106,14 @@ glm::vec3 trace(Ray ray, int step)
 		Ray reflectedRay(ray.hit, reflectedDir);
 		glm::vec3 reflectedColor = trace(reflectedRay, step + 1);
 		color = color + (rho * reflectedColor);
+	}
+
+	if (obj->isTransparent() && step < MAX_STEPS)
+	{
+		float coeff = obj->getTransparencyCoeff();
+		Ray transparentRay(ray.hit, ray.dir);
+		glm::vec3 transparentColour = trace(transparentRay, step + 1);
+		color = (color * (1 - coeff)) + (coeff * transparentColour);
 	}
 
 	return color;
@@ -178,6 +198,7 @@ void initialize()
 
 	Sphere *sphere2 = new Sphere(glm::vec3(5, 5, -70), 4.0);
 	sphere2->setColor(glm::vec3(1, 0, 0));
+	sphere2->setRefractivity(true, 0.5, 1.3);
 	sceneObjects.push_back(sphere2);
 
 	Sphere *sphere3 = new Sphere(glm::vec3(10, 10, -60), 3.0);
@@ -185,8 +206,9 @@ void initialize()
 	sceneObjects.push_back(sphere3);
 
 	Sphere *sphere4 = new Sphere(glm::vec3(5, -10, -60), 5.0);
-	sphere4->setColor(glm::vec3(0, 1, 0));
-	// sphere4->setShininess(5);
+	sphere4->setColor(glm::vec3(0.5, 1, 0));
+	sphere4->setTransparency(true, 0.8);
+	sphere4->setReflectivity(true, 0.5);
 	sceneObjects.push_back(sphere4);
 
 	Plane *plane = new Plane(glm::vec3(-100, -15, -40),
