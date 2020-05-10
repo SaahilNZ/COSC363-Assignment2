@@ -85,20 +85,16 @@ glm::vec3 trace(Ray ray, int step)
 		{
 			glm::vec3 hitCol = hitObject->getColor();
 			color = glm::vec3(
-				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * color.r + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.r)),
-				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * color.g + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.g)),
-				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * color.b + ((1 - hitObject->getReflectionCoeff()) * 0.5 * hitCol.b)));
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * obj->getColor().r + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.r)),
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * obj->getColor().g + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.g)),
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * obj->getColor().b + ((1 - hitObject->getReflectionCoeff()) * 0.5 * hitCol.b)));
 		}
 		else
 		{
-			// color = glm::vec3(
-			// 	0.2 * obj->getColor().r,
-			// 	0.2 * obj->getColor().g,
-			// 	0.2 * obj->getColor().b);
 			color = glm::vec3(
-				0.2 * color.r,
-				0.2 * color.g,
-				0.2 * color.b);
+				0.2 * obj->getColor().r,
+				0.2 * obj->getColor().g,
+				0.2 * obj->getColor().b);
 		}
 	}
 
