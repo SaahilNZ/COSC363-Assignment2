@@ -81,7 +81,7 @@ glm::vec3 trace(Ray ray, int step)
 	if (shadowRay.index > -1 && shadowRay.dist < glm::length(lightVec))
 	{
 		SceneObject* hitObject = sceneObjects[shadowRay.index];
-		if (hitObject->isTransparent())
+		if (hitObject->isTransparent() || hitObject->isRefractive())
 		{
 			glm::vec3 hitCol = hitObject->getColor();
 			color = glm::vec3(
@@ -91,10 +91,14 @@ glm::vec3 trace(Ray ray, int step)
 		}
 		else
 		{
+			// color = glm::vec3(
+			// 	0.2 * obj->getColor().r,
+			// 	0.2 * obj->getColor().g,
+			// 	0.2 * obj->getColor().b);
 			color = glm::vec3(
-				0.2 * obj->getColor().r,
-				0.2 * obj->getColor().g,
-				0.2 * obj->getColor().b);	
+				0.2 * color.r,
+				0.2 * color.g,
+				0.2 * color.b);
 		}
 	}
 
@@ -114,6 +118,22 @@ glm::vec3 trace(Ray ray, int step)
 		Ray transparentRay(ray.hit, ray.dir);
 		glm::vec3 transparentColour = trace(transparentRay, step + 1);
 		color = (color * (1 - coeff)) + (coeff * transparentColour);
+	}
+
+	if (obj->isRefractive() && step < MAX_STEPS)
+	{
+		float coeff = obj->getRefractionCoeff();
+		float eta = 1.0f / obj->getRefractiveIndex();
+		glm::vec3 n = obj->normal(ray.hit);
+		glm::vec3 g = glm::refract(ray.dir, n, eta);
+		Ray refrRay(ray.hit, g);
+		refrRay.closestPt(sceneObjects);
+		glm::vec3 m = obj->normal(refrRay.hit);
+		glm::vec3 h = glm::refract(g, -m, 1.0f / eta);
+
+		Ray finalRay(refrRay.hit, h);
+		glm::vec3 refractedColour = trace(finalRay, step + 1);
+		color = (color * (1 - coeff)) + (coeff * refractedColour);
 	}
 
 	return color;
@@ -198,7 +218,8 @@ void initialize()
 
 	Sphere *sphere2 = new Sphere(glm::vec3(5, 5, -70), 4.0);
 	sphere2->setColor(glm::vec3(1, 0, 0));
-	sphere2->setRefractivity(true, 0.5, 1.3);
+	sphere2->setRefractivity(true, 0.8, 1.003);
+	sphere2->setReflectivity(true, 0.5);
 	sceneObjects.push_back(sphere2);
 
 	Sphere *sphere3 = new Sphere(glm::vec3(10, 10, -60), 3.0);
