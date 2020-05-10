@@ -123,12 +123,25 @@ void display()
 		{
 			yp = YMIN + j*cellY;
 
-		    glm::vec3 dir(xp+0.5*cellX, yp+0.5*cellY, -EDIST);	//direction of the primary ray
+		    glm::vec3 dir1(xp+0.25*cellX, yp+0.25*cellY, -EDIST);
+		    glm::vec3 dir2(xp+0.25*cellX, yp+0.75*cellY, -EDIST);
+		    glm::vec3 dir3(xp+0.75*cellX, yp+0.25*cellY, -EDIST);
+		    glm::vec3 dir4(xp+0.75*cellX, yp+0.75*cellY, -EDIST);
 
-		    Ray ray = Ray(eye, dir);
+		    Ray ray1 = Ray(eye, dir1);
+		    Ray ray2 = Ray(eye, dir2);
+		    Ray ray3 = Ray(eye, dir3);
+		    Ray ray4 = Ray(eye, dir4);
 
-		    glm::vec3 col = trace (ray, 1); //Trace the primary ray and get the colour value
-			glColor3f(col.r, col.g, col.b);
+		    glm::vec3 col1 = trace (ray1, 1);
+		    glm::vec3 col2 = trace (ray2, 1);
+		    glm::vec3 col3 = trace (ray3, 1);
+		    glm::vec3 col4 = trace (ray4, 1);
+
+			glColor3f(
+				(col1.r + col2.r + col3.r + col4.r) / 4,
+				(col1.g + col2.g + col3.g + col4.g) / 4,
+				(col1.b + col2.b + col3.b + col4.b) / 4);
 			glVertex2f(xp, yp);				//Draw each cell with its color value
 			glVertex2f(xp+cellX, yp);
 			glVertex2f(xp+cellX, yp+cellY);
