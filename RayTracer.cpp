@@ -18,7 +18,9 @@
 #include "TextureBMP.h"
 using namespace std;
 
-#define CHECKERBOARD_WIDTH 5
+#define BOARD_WIDTH 5
+#define BOARD_PRIMARY_COLOUR glm::vec3(0.8, 0.8, 0.8)
+#define BOARD_SECONDARY_COLOUR glm::vec3(0.25, 0.25, 0.25)
 
 const float WIDTH = 20.0;  
 const float HEIGHT = 20.0;
@@ -50,10 +52,10 @@ glm::vec3 trace(Ray ray, int step)
 
 	if (ray.index == 4)
 	{
-		int iz = (ray.hit.z < 0 ? -ray.hit.z + CHECKERBOARD_WIDTH : ray.hit.z) / CHECKERBOARD_WIDTH;
-		int ix = (ray.hit.x < 0 ? -ray.hit.x + CHECKERBOARD_WIDTH : ray.hit.x) / CHECKERBOARD_WIDTH;
+		int iz = (ray.hit.z < 0 ? -ray.hit.z + BOARD_WIDTH : ray.hit.z) / BOARD_WIDTH;
+		int ix = (ray.hit.x < 0 ? -ray.hit.x + BOARD_WIDTH : ray.hit.x) / BOARD_WIDTH;
 		int k = (iz % 2) ^ (ix % 2);
-		color = (k == 0) ? glm::vec3(0, 1, 0) : glm::vec3(1, 1, 0.5);
+		color = (k == 0) ? BOARD_PRIMARY_COLOUR : BOARD_SECONDARY_COLOUR;
 		obj->setColor(color);
 
 		float x1 = -15.0;
