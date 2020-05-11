@@ -18,6 +18,8 @@
 #include "TextureBMP.h"
 using namespace std;
 
+#define colFromBytes(r, g, b) glm::vec3(r / 255.0f, g / 255.0f, b / 255.0f)
+
 #define BOARD_WIDTH 5
 #define BOARD_PRIMARY_COLOUR glm::vec3(0.8, 0.8, 0.8)
 #define BOARD_SECONDARY_COLOUR glm::vec3(0.25, 0.25, 0.25)
@@ -41,14 +43,15 @@ TextureBMP texture;
 //----------------------------------------------------------------------------------
 glm::vec3 trace(Ray ray, int step)
 {
-	glm::vec3 backgroundCol(0);						//Background colour = (0,0,0)
-	glm::vec3 lightPos(10, 40, -3);					//Light's position
+	// glm::vec3 backgroundCol(0);						   	//Background colour = (0,0,0)
+	glm::vec3 backgroundCol = colFromBytes(135, 206, 235);	//Background colour = (135,206,235)
+	glm::vec3 lightPos(10, 40, -3);					       	//Light's position
 	glm::vec3 color(0);
 	SceneObject* obj;
 
-    ray.closestPt(sceneObjects);					//Compare the ray with all objects in the scene
-    if(ray.index == -1) return backgroundCol;		//no intersection
-	obj = sceneObjects[ray.index];					//object on which the closest point of intersection is found
+    ray.closestPt(sceneObjects);					 		//Compare the ray with all objects in the scene
+    if(ray.index == -1) return backgroundCol;		 		//no intersection
+	obj = sceneObjects[ray.index];					 		//object on which the closest point of intersection is found
 
 	if (ray.index == 4)
 	{
@@ -106,6 +109,7 @@ glm::vec3 trace(Ray ray, int step)
 		Ray reflectedRay(ray.hit, reflectedDir);
 		glm::vec3 reflectedColor = trace(reflectedRay, step + 1);
 		color = color + (rho * reflectedColor);
+		// color = ((1 - rho) * color) + (rho * reflectedColor);
 	}
 
 	if (obj->isTransparent() && step < MAX_STEPS)
@@ -223,7 +227,7 @@ void initialize()
 	sceneObjects.push_back(sphere3);
 
 	Sphere *sphere4 = new Sphere(glm::vec3(5, -10, -60), 5.0);
-	sphere4->setColor(glm::vec3(0.5, 1, 0));
+	sphere4->setColor(glm::vec3(0, 1, 0));
 	sphere4->setTransparency(true, 0.8);
 	sphere4->setReflectivity(true, 0.5);
 	sceneObjects.push_back(sphere4);
