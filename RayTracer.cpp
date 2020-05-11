@@ -24,8 +24,8 @@ using namespace std;
 #define BOARD_PRIMARY_COLOUR glm::vec3(0.8, 0.8, 0.8)
 #define BOARD_SECONDARY_COLOUR glm::vec3(0.25, 0.25, 0.25)
 
-const float WIDTH = 20.0;  
-const float HEIGHT = 20.0;
+const float WIDTH = 40.0;  
+const float HEIGHT = 40.0;
 const float EDIST = 40.0;
 const int NUMDIV = 500;
 const int MAX_STEPS = 5;
@@ -53,7 +53,7 @@ glm::vec3 trace(Ray ray, int step)
     if(ray.index == -1) return backgroundCol;		 		//no intersection
 	obj = sceneObjects[ray.index];					 		//object on which the closest point of intersection is found
 
-	if (ray.index == 4)
+	if (ray.index == 0)
 	{
 		int iz = (ray.hit.z < 0 ? -ray.hit.z + BOARD_WIDTH : ray.hit.z) / BOARD_WIDTH;
 		int ix = (ray.hit.x < 0 ? -ray.hit.x + BOARD_WIDTH : ray.hit.x) / BOARD_WIDTH;
@@ -210,6 +210,14 @@ void initialize()
 
 	// texture = TextureBMP("Butterfly.bmp");
 
+	Plane *plane = new Plane(glm::vec3(-200, -15, 0),
+							 glm::vec3(200, -15, 0),
+							 glm::vec3(200, -15,-400),
+							 glm::vec3(-200, -15, -400));
+	plane->setSpecularity(false);
+	plane->setReflectivity(true, 0.25);
+	sceneObjects.push_back(plane);
+
 	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, 0.0, -90.0), 15.0);
 	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
 	// sphere1->setSpecularity(false);
@@ -226,18 +234,60 @@ void initialize()
 	sphere3->setColor(glm::vec3(0, 1, 1));
 	sceneObjects.push_back(sphere3);
 
-	Sphere *sphere4 = new Sphere(glm::vec3(5, -10, -60), 5.0);
+	Sphere *sphere4 = new Sphere(glm::vec3(15, -10, -40), 5.0);
 	sphere4->setColor(glm::vec3(0, 1, 0));
 	sphere4->setTransparency(true, 0.8);
 	sphere4->setReflectivity(true, 0.5);
 	sceneObjects.push_back(sphere4);
 
-	Plane *plane = new Plane(glm::vec3(-100, -15, -40),
-							 glm::vec3(100, -15, -40),
-							 glm::vec3(100, -15,-400),
-							 glm::vec3(-100, -15, -400));
-	plane->setSpecularity(false);
-	sceneObjects.push_back(plane);
+	// Draw a cube
+	Plane *cubeBottom = new Plane(glm::vec3(-15, -14.99, -50),
+								  glm::vec3(-5, -14.99, -50),
+								  glm::vec3(-5, -14.99, -60),
+								  glm::vec3(-15, -14.99, -60));
+	cubeBottom->setColor(glm::vec3(1, 0, 0));
+	cubeBottom->setRefractivity(true, 0.5, 1.03);
+	cubeBottom->setReflectivity(true, 0.8);
+	sceneObjects.push_back(cubeBottom);
+	Plane *cubeTop = new Plane(glm::vec3(-15, -5, -50),
+							   glm::vec3(-5, -5, -50),
+							   glm::vec3(-5, -5, -60),
+							   glm::vec3(-15, -5, -60));
+	cubeTop->setColor(glm::vec3(1, 0, 0));
+	cubeTop->setRefractivity(true, 0.5, 1.03);
+	cubeTop->setReflectivity(true, 0.8);
+	sceneObjects.push_back(cubeTop);
+	Plane *cubeBack = new Plane(glm::vec3(-15, -15, -60),
+							   glm::vec3(-5, -15, -60),
+							   glm::vec3(-5, -5, -60),
+							   glm::vec3(-15, -5, -60));
+	cubeBack->setColor(glm::vec3(1, 0, 0));
+	cubeBack->setRefractivity(true, 0.5, 1.03);
+	cubeBack->setReflectivity(true, 0.8);
+	sceneObjects.push_back(cubeBack);
+	Plane *cubeFront = new Plane(glm::vec3(-15, -15, -50),
+							   glm::vec3(-5, -15, -50),
+							   glm::vec3(-5, -5, -50),
+							   glm::vec3(-15, -5, -50));
+	cubeFront->setColor(glm::vec3(1, 0, 0));
+	cubeFront->setRefractivity(true, 0.5, 1.03);
+	cubeFront->setReflectivity(true, 0.8);
+	sceneObjects.push_back(cubeFront);
+	Plane *cubeLeft = new Plane(glm::vec3(-15, -15, -50),
+							   glm::vec3(-15, -15, -60),
+							   glm::vec3(-15, -5, -60),
+							   glm::vec3(-15, -5, -50));
+	cubeLeft->setColor(glm::vec3(1, 0, 0));
+	cubeLeft->setRefractivity(true, 0.5, 1.03);
+	cubeLeft->setReflectivity(true, 0.8);
+	Plane *cubeRight = new Plane(glm::vec3(-5, -15, -50),
+							   glm::vec3(-5, -15, -60),
+							   glm::vec3(-5, -5, -60),
+							   glm::vec3(-5, -5, -50));
+	cubeRight->setColor(glm::vec3(1, 0, 0));
+	cubeRight->setRefractivity(true, 0.5, 1.03);
+	cubeRight->setReflectivity(true, 0.8);
+	sceneObjects.push_back(cubeRight);
 }
 
 
