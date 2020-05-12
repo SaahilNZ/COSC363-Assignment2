@@ -16,6 +16,7 @@
 #include "Plane.h"
 #include <GL/freeglut.h>
 #include "TextureBMP.h"
+#include "Torus.h"
 using namespace std;
 
 #define colFromBytes(r, g, b) glm::vec3(r / 255.0f, g / 255.0f, b / 255.0f)
@@ -109,7 +110,6 @@ glm::vec3 trace(Ray ray, int step)
 		Ray reflectedRay(ray.hit, reflectedDir);
 		glm::vec3 reflectedColor = trace(reflectedRay, step + 1);
 		color = color + (rho * reflectedColor);
-		// color = ((1 - rho) * color) + (rho * reflectedColor);
 	}
 
 	if (obj->isTransparent() && step < MAX_STEPS)
@@ -288,6 +288,12 @@ void initialize()
 	cubeRight->setRefractivity(true, 0.5, 1.03);
 	cubeRight->setReflectivity(true, 0.8);
 	sceneObjects.push_back(cubeRight);
+
+	Torus *torus = new Torus(glm::vec3(2, -10, -40), 4, 2);
+	torus->setColor(glm::vec3(0, 0.2, 0));
+	// torus->setRefractivity(true, 0.5, 1.5);
+	torus->setReflectivity(true, 0.4);
+	sceneObjects.push_back(torus);
 }
 
 
