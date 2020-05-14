@@ -17,10 +17,12 @@
 #include <GL/freeglut.h>
 #include "TextureBMP.h"
 #include "Torus.h"
+#include <thread>
 using namespace std;
 
 #define colFromBytes(r, g, b) glm::vec3(r / 255.0f, g / 255.0f, b / 255.0f)
 
+#define NUM_THREADS 16
 #define BOARD_WIDTH 5
 #define BOARD_PRIMARY_COLOUR glm::vec3(0.8, 0.8, 0.8)
 #define BOARD_SECONDARY_COLOUR glm::vec3(0.25, 0.25, 0.25)
@@ -28,7 +30,7 @@ using namespace std;
 const float WIDTH = 40.0;  
 const float HEIGHT = 40.0;
 const float EDIST = 40.0;
-const int NUMDIV = 500;
+const int NUMDIV = 512;
 const int MAX_STEPS = 5;
 const float XMIN = -WIDTH * 0.5;
 const float XMAX =  WIDTH * 0.5;
@@ -37,6 +39,8 @@ const float YMAX =  HEIGHT * 0.5;
 
 vector<SceneObject*> sceneObjects;
 TextureBMP texture;
+bool traced = false;
+glm::vec3 pixels[NUMDIV][NUMDIV];
 
 //---The most important function in a ray tracer! ---------------------------------- 
 //   Computes the colour value obtained by tracing a ray and finding its 
@@ -60,7 +64,7 @@ glm::vec3 trace(Ray ray, int step)
 		int ix = (ray.hit.x < 0 ? -ray.hit.x + BOARD_WIDTH : ray.hit.x) / BOARD_WIDTH;
 		int k = (iz % 2) ^ (ix % 2);
 		color = (k == 0) ? BOARD_PRIMARY_COLOUR : BOARD_SECONDARY_COLOUR;
-		obj->setColor(color);
+		// obj->setColor(color);
 
 		float x1 = -15.0;
 		float x2 = 5.0;
@@ -73,11 +77,15 @@ glm::vec3 trace(Ray ray, int step)
 			texcoordt >= 0 && texcoordt <= 1)
 		{
 			// color = texture.getColorAt(texcoords, texcoordt);
-			obj->setColor(color);
+			// obj->setColor(color);
 		}
+		color = obj->lighting(lightPos, -ray.dir, ray.hit) * color;
+	}
+	else
+	{
+		color = obj->lighting(lightPos, -ray.dir, ray.hit);						//Object's colour
 	}
 
-	color = obj->lighting(lightPos, -ray.dir, ray.hit);						//Object's colour
 	
 	glm::vec3 lightVec = lightPos - ray.hit;
 	Ray shadowRay(ray.hit, lightVec);
@@ -89,16 +97,19 @@ glm::vec3 trace(Ray ray, int step)
 		{
 			glm::vec3 hitCol = hitObject->getColor();
 			color = glm::vec3(
-				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * obj->getColor().r + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.r)),
-				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * obj->getColor().g + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.g)),
-				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) * obj->getColor().b + ((1 - hitObject->getReflectionCoeff()) * 0.5 * hitCol.b)));
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) *
+					(ray.index == 0 ? color.r : obj->getColor().r) + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.r)),
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) *
+					(ray.index == 0 ? color.g : obj->getColor().g) + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.g)),
+				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) *
+					(ray.index == 0 ? color.b : obj->getColor().b) + ((1 - hitObject->getReflectionCoeff()) * 0.5 * hitCol.b)));
 		}
 		else
 		{
 			color = glm::vec3(
-				0.2 * obj->getColor().r,
-				0.2 * obj->getColor().g,
-				0.2 * obj->getColor().b);
+				0.2 * (ray.index == 0 ? color.r : obj->getColor().r),
+				0.2 * (ray.index == 0 ? color.g : obj->getColor().g),
+				0.2 * (ray.index == 0 ? color.b : obj->getColor().b));
 		}
 	}
 
@@ -139,6 +150,59 @@ glm::vec3 trace(Ray ray, int step)
 	return color;
 }
 
+void traceScene()
+{
+	int width = NUMDIV / NUM_THREADS;
+
+	std::thread threads[NUM_THREADS];
+	auto threadFunc = [](int i, int width)
+	{
+		float xp, yp;  //grid point
+		float cellX = (XMAX-XMIN)/NUMDIV;  //cell width
+		float cellY = (YMAX-YMIN)/NUMDIV;  //cell height
+		glm::vec3 eye(0., 0., 0.);
+
+		// if (i > 1) return;
+		for (int x = (i * width); x < ((i + 1) * width); x++)
+		{
+			xp = XMIN + x*cellX;
+			for (int y = 0; y < NUMDIV; y++)
+			{
+				yp = YMIN + y*cellY;
+
+				glm::vec3 dir1(xp+0.25*cellX, yp+0.25*cellY, -EDIST);
+				glm::vec3 dir2(xp+0.25*cellX, yp+0.75*cellY, -EDIST);
+				glm::vec3 dir3(xp+0.75*cellX, yp+0.25*cellY, -EDIST);
+				glm::vec3 dir4(xp+0.75*cellX, yp+0.75*cellY, -EDIST);
+
+				Ray ray1 = Ray(eye, dir1);
+				Ray ray2 = Ray(eye, dir2);
+				Ray ray3 = Ray(eye, dir3);
+				Ray ray4 = Ray(eye, dir4);
+
+				glm::vec3 col1 = trace (ray1, 1);
+				glm::vec3 col2 = trace (ray2, 1);
+				glm::vec3 col3 = trace (ray3, 1);
+				glm::vec3 col4 = trace (ray4, 1);
+
+				pixels[x][y] = glm::vec3((col1.r + col2.r + col3.r + col4.r) / 4.0,
+										 (col1.g + col2.g + col3.g + col4.g) / 4.0,
+										 (col1.b + col2.b + col3.b + col4.b) / 4.0);
+			}
+		}
+	};
+
+	for (int i = 0; i < NUM_THREADS; i++)
+	{
+		threads[i] = std::thread(threadFunc, i, width);
+	}
+
+	for (int i = 0; i < NUM_THREADS; i++)
+	{
+		threads[i].join();
+	}
+}
+
 //---The main display module -----------------------------------------------------------
 // In a ray tracing application, it just displays the ray traced image by drawing
 // each cell as a quad.
@@ -148,13 +212,18 @@ void display()
 	float xp, yp;  //grid point
 	float cellX = (XMAX-XMIN)/NUMDIV;  //cell width
 	float cellY = (YMAX-YMIN)/NUMDIV;  //cell height
-	glm::vec3 eye(0., 0., 0.);
 
 	glClear(GL_COLOR_BUFFER_BIT);
     glMatrixMode(GL_MODELVIEW);
     glLoadIdentity();
 
 	glBegin(GL_QUADS);  //Each cell is a tiny quad.
+
+	if (!traced)
+	{
+		traceScene();
+		traced = true;
+	}
 
 	for(int i = 0; i < NUMDIV; i++)	//Scan every cell of the image plane
 	{
@@ -163,25 +232,9 @@ void display()
 		{
 			yp = YMIN + j*cellY;
 
-		    glm::vec3 dir1(xp+0.25*cellX, yp+0.25*cellY, -EDIST);
-		    glm::vec3 dir2(xp+0.25*cellX, yp+0.75*cellY, -EDIST);
-		    glm::vec3 dir3(xp+0.75*cellX, yp+0.25*cellY, -EDIST);
-		    glm::vec3 dir4(xp+0.75*cellX, yp+0.75*cellY, -EDIST);
-
-		    Ray ray1 = Ray(eye, dir1);
-		    Ray ray2 = Ray(eye, dir2);
-		    Ray ray3 = Ray(eye, dir3);
-		    Ray ray4 = Ray(eye, dir4);
-
-		    glm::vec3 col1 = trace (ray1, 1);
-		    glm::vec3 col2 = trace (ray2, 1);
-		    glm::vec3 col3 = trace (ray3, 1);
-		    glm::vec3 col4 = trace (ray4, 1);
-
-			glColor3f(
-				(col1.r + col2.r + col3.r + col4.r) / 4,
-				(col1.g + col2.g + col3.g + col4.g) / 4,
-				(col1.b + col2.b + col3.b + col4.b) / 4);
+			glColor3f(pixels[i][j].r,
+					  pixels[i][j].g,
+					  pixels[i][j].b);
 			glVertex2f(xp, yp);				//Draw each cell with its color value
 			glVertex2f(xp+cellX, yp);
 			glVertex2f(xp+cellX, yp+cellY);
@@ -300,7 +353,7 @@ void initialize()
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB );
-    glutInitWindowSize(500, 500);
+    glutInitWindowSize(NUMDIV, NUMDIV);
     glutInitWindowPosition(20, 20);
     glutCreateWindow("Raytracing");
 
