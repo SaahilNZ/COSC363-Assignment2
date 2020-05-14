@@ -30,7 +30,7 @@ using namespace std;
 const float WIDTH = 40.0;  
 const float HEIGHT = 40.0;
 const float EDIST = 40.0;
-const int NUMDIV = 512;
+const int NUMDIV = 1024;
 const int MAX_STEPS = 5;
 const float XMIN = -WIDTH * 0.5;
 const float XMAX =  WIDTH * 0.5;
@@ -277,9 +277,9 @@ void initialize()
 	sphere1->setReflectivity(true, 0.8);
 	sceneObjects.push_back(sphere1);		 //Add sphere to scene objects
 
-	Sphere *sphere2 = new Sphere(glm::vec3(5, 5, -70), 4.0);
+	Sphere *sphere2 = new Sphere(glm::vec3(5, -2, -70), 4.0);
 	sphere2->setColor(glm::vec3(1, 0, 0));
-	sphere2->setRefractivity(true, 0.8, 1.003);
+	sphere2->setRefractivity(true, 0.65, 1.01);
 	sphere2->setReflectivity(true, 0.5);
 	sceneObjects.push_back(sphere2);
 
