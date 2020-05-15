@@ -22,10 +22,10 @@ float Plane::intersect(glm::vec3 p0, glm::vec3 dir)
 
     float t = glm::dot(vdif, n)/d_dot_n;
 	if(fabs(t) < 0.0001) return -1;
+	glm::vec3 q = p0 + dir*t;
 
-	glm::vec3 q = p0 + dir * t;
-	if (isInside(q)) return t;
-	else return -1;
+	if(isInside(q)) return t;
+    else return -1;
 }
 
 /**
@@ -51,6 +51,7 @@ bool Plane::isInside(glm::vec3 q)
 	glm::vec3 n = normal(q);     //Normal vector at the point of intersection
 	glm::vec3 ua = b_ - a_, ub = c_ - b_, uc = d_ - c_, ud = a_ - d_;
 	glm::vec3 va = q - a_, vb = q - b_, vc = q - c_, vd = q - d_;
+	if (nverts_ == 3) uc = a_ - c_;
 	float ka = glm::dot(glm::cross(ua, va), n);
 	float kb = glm::dot(glm::cross(ub, vb), n);
 	float kc = glm::dot(glm::cross(uc, vc), n);

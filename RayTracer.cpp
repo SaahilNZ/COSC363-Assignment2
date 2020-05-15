@@ -246,53 +246,8 @@ void display()
     glFlush();
 }
 
-
-
-//---This function initializes the scene ------------------------------------------- 
-//   Specifically, it creates scene objects (spheres, planes, cones, cylinders etc)
-//     and add them to the list of scene objects.
-//   It also initializes the OpenGL orthographc projection matrix for drawing the
-//     the ray traced image.
-//----------------------------------------------------------------------------------
-void initialize()
+void drawCube()
 {
-    glMatrixMode(GL_PROJECTION);
-    gluOrtho2D(XMIN, XMAX, YMIN, YMAX);
-
-    glClearColor(0, 0, 0, 1);
-
-	// texture = TextureBMP("Butterfly.bmp");
-
-	Plane *plane = new Plane(glm::vec3(-200, -15, 0),
-							 glm::vec3(200, -15, 0),
-							 glm::vec3(200, -15,-400),
-							 glm::vec3(-200, -15, -400));
-	plane->setSpecularity(false);
-	plane->setReflectivity(true, 0.25);
-	sceneObjects.push_back(plane);
-
-	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, 0.0, -90.0), 15.0);
-	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
-	// sphere1->setSpecularity(false);
-	sphere1->setReflectivity(true, 0.8);
-	sceneObjects.push_back(sphere1);		 //Add sphere to scene objects
-
-	Sphere *sphere2 = new Sphere(glm::vec3(5, -2, -70), 4.0);
-	sphere2->setColor(glm::vec3(1, 0, 0));
-	sphere2->setRefractivity(true, 0.65, 1.01);
-	sphere2->setReflectivity(true, 0.5);
-	sceneObjects.push_back(sphere2);
-
-	Sphere *sphere3 = new Sphere(glm::vec3(10, 10, -60), 3.0);
-	sphere3->setColor(glm::vec3(0, 1, 1));
-	sceneObjects.push_back(sphere3);
-
-	Sphere *sphere4 = new Sphere(glm::vec3(15, -10, -40), 5.0);
-	sphere4->setColor(glm::vec3(0, 1, 0));
-	sphere4->setTransparency(true, 0.8);
-	sphere4->setReflectivity(true, 0.5);
-	sceneObjects.push_back(sphere4);
-
 	// Draw a cube
 	Plane *cubeBottom = new Plane(glm::vec3(-15, -14.99, -50),
 								  glm::vec3(-5, -14.99, -50),
@@ -341,12 +296,241 @@ void initialize()
 	cubeRight->setRefractivity(true, 0.5, 1.03);
 	cubeRight->setReflectivity(true, 0.8);
 	sceneObjects.push_back(cubeRight);
+}
+
+void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
+{
+	float reflectionCoeff = 0.6;
+	float refractionCoeff = 0.3;
+	float refractiveIndex = 1.05;
+
+	// bottom planes
+	Plane *b1 = new Plane(
+		location,
+		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale)
+	);
+	b1->setColor(colour);
+	b1->setReflectivity(true, reflectionCoeff);
+	b1->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(b1);
+
+	Plane *b2 = new Plane(
+		location,
+		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale),
+		location + glm::vec3(0.5 * scale, scale, -0.5 * scale)
+	);
+	b2->setColor(colour);
+	b2->setReflectivity(true, reflectionCoeff);
+	b2->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(b2);
+	
+	Plane *b3 = new Plane(
+		location,
+		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale)
+	);
+	b3->setColor(colour);
+	b3->setReflectivity(true, reflectionCoeff);
+	b3->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(b3);
+
+	Plane *b4 = new Plane(
+		location,
+		location + glm::vec3(0.5 * scale, scale, -0.5 * scale),
+		location + glm::vec3(0.5 * scale, scale, 0.5 * scale)
+	);
+	b4->setColor(colour);
+	b4->setReflectivity(true, reflectionCoeff);
+	b4->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(b4);
+
+	// lower planes
+	Plane *l1 = new Plane(
+		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(0, 7 * scale, scale)
+	);
+	l1->setColor(colour);
+	l1->setReflectivity(true, reflectionCoeff);
+	l1->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(l1);
+
+	Plane *l2 = new Plane(
+		location + glm::vec3(0.5 * scale, scale, -0.5 * scale),
+		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale),
+		location + glm::vec3(0, 7 * scale,  -scale)
+	);
+	l2->setColor(colour);
+	l2->setReflectivity(true, reflectionCoeff);
+	l2->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(l2);
+
+	Plane *l3 = new Plane(
+		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale),
+		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(-scale, 7 * scale, 0)
+	);
+	l3->setColor(colour);
+	l3->setReflectivity(true, reflectionCoeff);
+	l3->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(l3);
+
+	Plane *l4 = new Plane(
+		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(0.5 * scale, scale, -0.5 * scale),
+		location + glm::vec3(scale, 7 * scale,  0)
+	);
+	l4->setColor(colour);
+	l4->setReflectivity(true, reflectionCoeff);
+	l4->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(l4);
+
+	// upper planes
+	Plane *u1 = new Plane(
+		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(0, 7 * scale, scale),
+		location + glm::vec3(-0.5 * scale, 8.5 * scale, 0.5 * scale),
+		location + glm::vec3(-scale, 7 * scale, 0)
+	);
+	u1->setColor(colour);
+	u1->setReflectivity(true, reflectionCoeff);
+	u1->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(u1);
+	
+	Plane *u2 = new Plane(
+		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(scale, 7 * scale, 0),
+		location + glm::vec3(0.5 * scale, 8.5 * scale, 0.5 * scale),
+		location + glm::vec3(0, 7 * scale, scale)
+	);
+	u2->setColor(colour);
+	u2->setReflectivity(true, reflectionCoeff);
+	u2->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(u2);
+	
+	Plane *u3 = new Plane(
+		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale),
+		location + glm::vec3(-scale, 7 * scale, 0),
+		location + glm::vec3(-0.5 * scale, 8.5 * scale, -0.5 * scale),
+		location + glm::vec3(0, 7 * scale, -scale)
+	);
+	u3->setColor(colour);
+	u3->setReflectivity(true, reflectionCoeff);
+	u3->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(u3);
+	
+	Plane *u4 = new Plane(
+		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
+		location + glm::vec3(0, 7 * scale, -scale),
+		location + glm::vec3(0.5 * scale, 8.5 * scale, -0.5 * scale),
+		location + glm::vec3(scale, 7 * scale, 0)
+	);
+	u4->setColor(colour);
+	u4->setReflectivity(true, reflectionCoeff);
+	u4->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(u4);
+
+	// top planes
+	Plane *t1 = new Plane(
+		location + glm::vec3(0, 7 * scale, scale),
+		location + glm::vec3(0.5 * scale, 8.5 * scale, 0.5 * scale),
+		location + glm::vec3(0, 9.5 * scale, 0),
+		location + glm::vec3(-0.5 * scale, 8.5 * scale, 0.5 * scale)
+	);
+	t1->setColor(colour);
+	t1->setReflectivity(true, reflectionCoeff);
+	t1->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(t1);
+	
+	Plane *t2 = new Plane(
+		location + glm::vec3(0, 7 * scale, -scale),
+		location + glm::vec3(-0.5 * scale, 8.5 * scale, -0.5 * scale),
+		location + glm::vec3(0, 9.5 * scale, 0),
+		location + glm::vec3(0.5 * scale, 8.5 * scale, -0.5 * scale)
+	);
+	t2->setColor(colour);
+	t2->setReflectivity(true, reflectionCoeff);
+	t2->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(t2);
+
+	Plane *t3 = new Plane(
+		location + glm::vec3(-scale, 7 * scale, 0),
+		location + glm::vec3(-0.5 * scale, 8.5 * scale, 0.5 * scale),
+		location + glm::vec3(0, 9.5 * scale, 0),
+		location + glm::vec3(-0.5 * scale, 8.5 * scale, -0.5 * scale)
+	);
+	t3->setColor(colour);
+	t3->setReflectivity(true, reflectionCoeff);
+	t3->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(t3);
+	
+	Plane *t4 = new Plane(
+		location + glm::vec3(scale, 7 * scale, 0),
+		location + glm::vec3(0.5 * scale, 8.5 * scale, -0.5 * scale),
+		location + glm::vec3(0, 9.5 * scale, 0),
+		location + glm::vec3(0.5 * scale, 8.5 * scale, 0.5 * scale)
+	);
+	t4->setColor(colour);
+	t4->setReflectivity(true, reflectionCoeff);
+	t4->setRefractivity(true, refractionCoeff, refractiveIndex);
+	sceneObjects.push_back(t4);
+}
+
+//---This function initializes the scene ------------------------------------------- 
+//   Specifically, it creates scene objects (spheres, planes, cones, cylinders etc)
+//     and add them to the list of scene objects.
+//   It also initializes the OpenGL orthographc projection matrix for drawing the
+//     the ray traced image.
+//----------------------------------------------------------------------------------
+void initialize()
+{
+    glMatrixMode(GL_PROJECTION);
+    gluOrtho2D(XMIN, XMAX, YMIN, YMAX);
+
+    glClearColor(0, 0, 0, 1);
+
+	// texture = TextureBMP("Butterfly.bmp");
+
+	Plane *plane = new Plane(glm::vec3(-200, -15, 0),
+							 glm::vec3(200, -15, 0),
+							 glm::vec3(200, -15,-400),
+							 glm::vec3(-200, -15, -400));
+	plane->setSpecularity(false);
+	plane->setReflectivity(true, 0.25);
+	sceneObjects.push_back(plane);
+
+	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, 0.0, -90.0), 15.0);
+	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
+	// sphere1->setSpecularity(false);
+	sphere1->setReflectivity(true, 0.8);
+	sceneObjects.push_back(sphere1);		 //Add sphere to scene objects
+
+	Sphere *sphere2 = new Sphere(glm::vec3(5, -2, -70), 4.0);
+	sphere2->setColor(glm::vec3(1, 0, 0));
+	sphere2->setRefractivity(true, 0.65, 1.01);
+	sphere2->setReflectivity(true, 0.5);
+	sceneObjects.push_back(sphere2);
+
+	Sphere *sphere3 = new Sphere(glm::vec3(10, 10, -60), 3.0);
+	sphere3->setColor(glm::vec3(0, 1, 1));
+	sceneObjects.push_back(sphere3);
+
+	Sphere *sphere4 = new Sphere(glm::vec3(15, -10, -40), 5.0);
+	sphere4->setColor(glm::vec3(0, 1, 0));
+	sphere4->setTransparency(true, 0.8);
+	sphere4->setReflectivity(true, 0.5);
+	sceneObjects.push_back(sphere4);
+
+	drawCube();
 
 	Torus *torus = new Torus(glm::vec3(2, -10, -40), 4, 2);
 	torus->setColor(glm::vec3(0, 0.2, 0));
 	// torus->setRefractivity(true, 0.5, 1.5);
 	torus->setReflectivity(true, 0.4);
 	sceneObjects.push_back(torus);
+
+	drawCrystal(1.0f, glm::vec3(-7.5, -15, -35), colFromBytes(255, 0, 255));
 }
 
 
