@@ -42,8 +42,10 @@ const float YMIN = -HEIGHT * 0.5;
 const float YMAX =  HEIGHT * 0.5;
 
 vector<SceneObject*> sceneObjects;
-TextureBMP texture;
+TextureBMP brickAlbedo;
+TextureBMP brickNormal;
 bool traced = false;
+bool exported = false;
 glm::vec3 pixels[NUMDIV][NUMDIV];
 
 float **marbleNoise;
@@ -61,6 +63,8 @@ glm::vec3 trace(Ray ray, int step)
 	glm::vec3 color(0);
 	SceneObject* obj;
 	float ambientLevel = 0.2;
+	float texcoords;
+	float texcoordt;
 
     ray.closestPt(sceneObjects);					 		//Compare the ray with all objects in the scene
     if(ray.index == -1) return backgroundCol;		 		//no intersection
@@ -75,32 +79,34 @@ glm::vec3 trace(Ray ray, int step)
 		int ix = (ray.hit.x < 0 ? -ray.hit.x + BOARD_WIDTH : ray.hit.x) / BOARD_WIDTH;
 		int k = (iz % 2) ^ (ix % 2);
 		baseColor = (k == 0) ? BOARD_PRIMARY_COLOUR : BOARD_SECONDARY_COLOUR;
-		
-		float x1 = -15.0;
-		float x2 = 5.0;
-		float z1 = -60.0;
-		float z2 = -90.0;
-
-		float texcoords = (ray.hit.x - x1) / (x2 - x1);
-		float texcoordt = (ray.hit.z - z1) / (z2 - z1);
-		if (texcoords >= 0 && texcoords <= 1 &&
-			texcoordt >= 0 && texcoordt <= 1)
-		{
-			// baseColor = texture.getColorAt(texcoords, texcoordt);
-		}
 
 		differentColour = true;
 	}
-	else if (ray.index == 3)
+	else if (ray.index == 1)
+	{
+		float x1 = -200.0;
+		float x2 = -100.0;
+		float y1 = -15.0;
+		float y2 = 85.0;
+
+		texcoords = fmod((ray.hit.x - x1) / (x2 - x1), 1.0);
+		texcoordt = fmod((ray.hit.y - y1) / (y2 - y1), 1.0);
+		
+		baseColor = brickAlbedo.getColorAt(texcoords, texcoordt);
+		// baseColor = glm::vec3(0.5);
+
+		differentColour = true;
+	}
+	else if (ray.index == 4)
 	{
 		glm::vec3 origin = glm::vec3(10, 10, -60);
 		glm::vec3 localHit = glm::normalize(ray.hit - origin);
 
-		float u = 0.5 + atan2(localHit.x, localHit.z) / (2 * PI); 
-		float v = 0.5 - asin(localHit.y) / PI;
+		texcoords = 0.5 + atan2(localHit.x, localHit.z) / (2 * PI); 
+		texcoordt = 0.5 - asin(localHit.y) / PI;
 		
-		int xPixel = (int)glm::round(u * NOISE_WIDTH);
-		int yPixel = NOISE_HEIGHT - (int)glm::round(v * NOISE_HEIGHT);
+		int xPixel = (int)glm::round(texcoords * NOISE_WIDTH);
+		int yPixel = NOISE_HEIGHT - (int)glm::round(texcoordt * NOISE_HEIGHT);
 		baseColor = marbleColours[yPixel][xPixel] * baseColor;
 		
 		differentColour = true;
@@ -108,7 +114,15 @@ glm::vec3 trace(Ray ray, int step)
 
 	if (differentColour)
 	{
-		color = obj->lighting(lightPos, -ray.dir, ray.hit, baseColor);
+		if (ray.index == 1)
+		{
+			color = obj->lighting(lightPos, -ray.dir, ray.hit, baseColor,
+				brickNormal.getColorAt(texcoords, texcoordt));
+		}
+		else
+		{
+			color = obj->lighting(lightPos, -ray.dir, ray.hit, baseColor);
+		}
 	}
 	else
 	{
@@ -547,8 +561,9 @@ void initialize()
 
     glClearColor(0, 0, 0, 1);
 	generateMarble();
-
-	// texture = TextureBMP("Butterfly.bmp");
+	
+	brickAlbedo = TextureBMP("textures/brick_albedo.bmp");
+	brickNormal = TextureBMP("textures/brick_normal.bmp");
 
 	Plane *plane = new Plane(glm::vec3(-200, -15, 0),
 							 glm::vec3(200, -15, 0),
@@ -557,6 +572,14 @@ void initialize()
 	plane->setSpecularity(false);
 	plane->setReflectivity(true, 0.25);
 	sceneObjects.push_back(plane);
+	
+	Plane *brickWall = new Plane(glm::vec3(-200, -15, -200),
+								 glm::vec3(200, -15, -200),
+								 glm::vec3(200, 35, -200),
+								 glm::vec3(-200, 35, -200));
+	brickWall->setColor(glm::vec3(1, 0.8, 0));
+	brickWall->setSpecularity(false);
+	sceneObjects.push_back(brickWall);
 
 	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, 0.0, -90.0), 15.0);
 	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
@@ -589,7 +612,6 @@ void initialize()
 
 	// drawCrystal(1.0f, glm::vec3(-7.5, -15, -35), colFromBytes(255, 0, 255));
 }
-
 
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);

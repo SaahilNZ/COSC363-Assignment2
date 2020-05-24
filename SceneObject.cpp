@@ -50,6 +50,39 @@ glm::vec3 SceneObject::lighting(glm::vec3 lightPos, glm::vec3 viewVec, glm::vec3
 	glm::vec3 colorSum = ambientTerm * color + lDotn * color + specularTerm * glm::vec3(1);
 	return colorSum;
 }
+glm::vec3 SceneObject::lighting(glm::vec3 lightPos, glm::vec3 viewVec, glm::vec3 hit, glm::vec3 color, glm::vec3 normalMap)
+{
+	float ambientTerm = 0.2;
+	float diffuseTerm = 0;
+	float specularTerm = 0;
+	
+	// normal map logic retrieved from:
+	// https://stackoverflow.com/questions/41015574/raytracing-normal-mapping
+	glm::vec3 normalHit = normal(hit);
+	glm::vec3 tangent = glm::cross(normalHit, glm::vec3(0, 1, 0));
+	if (glm::length(tangent) == 0.0f)
+	{
+		tangent = glm::cross(normalHit, glm::vec3(0, 0, 1));
+	}
+	tangent = glm::normalize(tangent);
+	glm::vec3 bitangent = glm::normalize(glm::cross(normalHit, tangent));
+
+	glm::vec3 modifiedMap = normalMap * 2.0f - glm::vec3(1);
+	glm::mat3 tbn(tangent, bitangent, normalHit);
+	glm::vec3 normalVec = glm::normalize(tbn * modifiedMap);
+	
+	glm::vec3 lightVec = lightPos - hit;
+	lightVec = glm::normalize(lightVec);
+	float lDotn = glm::dot(lightVec, normalVec);
+	if (spec_)
+	{
+		glm::vec3 reflVec = glm::reflect(-lightVec, normalVec);
+		float rDotv = glm::dot(reflVec, viewVec);
+		if (rDotv > 0) specularTerm = pow(rDotv, shin_);
+	}
+	glm::vec3 colorSum = ambientTerm * color + lDotn * color + specularTerm * glm::vec3(1);
+	return colorSum;
+}
 
 float SceneObject::getReflectionCoeff()
 {
