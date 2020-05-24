@@ -21,9 +21,10 @@
 #include "Noise.h"
 using namespace std;
 
+#define clamp(val, min, max) val < min ? min : (val > max ? max : val)
 #define colFromBytes(r, g, b) glm::vec3(r / 255.0f, g / 255.0f, b / 255.0f)
 
-#define NUM_THREADS 16
+#define NUM_THREADS 4
 #define BOARD_WIDTH 5
 #define BOARD_PRIMARY_COLOUR glm::vec3(0.8, 0.8, 0.8)
 #define BOARD_SECONDARY_COLOUR glm::vec3(0.25, 0.25, 0.25)
@@ -613,6 +614,74 @@ void initialize()
 	// drawCrystal(1.0f, glm::vec3(-7.5, -15, -35), colFromBytes(255, 0, 255));
 }
 
+void exportTga()
+{
+	const int width = NUMDIV;
+	const int height = NUMDIV;
+	const int headerLen = 18;
+	const short int bpp = 24;
+	const int pixelBytes = width * height * (bpp / 8);
+	
+	// file format in little endian, assumes host machine is big endian
+
+	static unsigned char bytes[headerLen + pixelBytes];
+
+	bytes[2] = 2; // Image type (uncompressed true color)
+
+	// Image specification
+	bytes[8] = width & 0xFF;			// X-Origin
+	bytes[9] = (width >> 8) & 0xFF;		// X-Origin
+	bytes[10] = height & 0xFF;			// Y-Origin
+	bytes[11] = (height >> 8) & 0xFF;	// Y-Origin
+	bytes[12] = width & 0xFF;			// Width
+	bytes[13] = (width >> 8) & 0xFF;	// Width
+	bytes[14] = height & 0xFF;			// Height
+	bytes[15] = (height >> 8) & 0xFF;	// Height
+	bytes[16] = bpp;					// Pixel depth (bytes per pixel)
+	bytes[17] = 0;						// Image descriptor
+	int p = 18;
+	for (int y = 0; y < height; y++)
+	{
+		for (int x = 0; x < width; x++)
+		{
+			glm::vec3 pixel = pixels[x][y];
+			bytes[p] = clamp(255 * pixel.b, 0, 255);
+			p++;
+			bytes[p] = clamp(255 * pixel.g, 0, 255);
+			p++;
+			bytes[p] = clamp(255 * pixel.r, 0, 255);
+			p++;
+		}
+	}
+
+	cout << "Filled pixel data" << endl;
+
+
+	FILE *writePtr;
+
+	writePtr = fopen("render_output.tga", "wb");
+	cout << "Opened file for write" << endl;
+	fwrite(bytes, sizeof(bytes), 1, writePtr);
+	cout << "Wrote file" << endl;
+	fclose(writePtr);
+	cout << "Closed file stream" << endl;
+}
+
+void keyboard(unsigned char key, int x, int y)
+{
+	cout << "key pressed" << endl;
+	if (key == ' ' )
+	{
+		cout << "spacebar pressed" << endl;
+		if (!exported)
+		{
+			cout << "not yet exported" << endl;
+			exportTga();
+			exported = true;
+		}
+	}
+}
+
 int main(int argc, char *argv[]) {
     glutInit(&argc, argv);
     glutInitDisplayMode(GLUT_SINGLE | GLUT_RGB );
@@ -621,6 +690,7 @@ int main(int argc, char *argv[]) {
     glutCreateWindow("Raytracing");
 
     glutDisplayFunc(display);
+	glutKeyboardFunc(keyboard);
     initialize();
 
     glutMainLoop();
