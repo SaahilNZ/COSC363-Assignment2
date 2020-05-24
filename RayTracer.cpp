@@ -26,6 +26,7 @@ using namespace std;
 #define BOARD_WIDTH 5
 #define BOARD_PRIMARY_COLOUR glm::vec3(0.8, 0.8, 0.8)
 #define BOARD_SECONDARY_COLOUR glm::vec3(0.25, 0.25, 0.25)
+#define PI acos(-1)
 
 const float WIDTH = 40.0;  
 const float HEIGHT = 40.0;
@@ -42,6 +43,13 @@ TextureBMP texture;
 bool traced = false;
 glm::vec3 pixels[NUMDIV][NUMDIV];
 
+float angleBetweenVectors(glm::vec3 a, glm::vec3 b, glm::vec3 origin)
+{
+	glm::vec3 an = glm::normalize(a - origin);
+	glm::vec3 bn = glm::normalize(b - origin);
+	return glm::acos(glm::dot(an, bn));
+}
+
 //---The most important function in a ray tracer! ---------------------------------- 
 //   Computes the colour value obtained by tracing a ray and finding its 
 //     closest point of intersection with objects in the scene.
@@ -53,17 +61,21 @@ glm::vec3 trace(Ray ray, int step)
 	glm::vec3 lightPos(10, 40, -3);					       	//Light's position
 	glm::vec3 color(0);
 	SceneObject* obj;
+	float ambientLevel = 0.2;
 
     ray.closestPt(sceneObjects);					 		//Compare the ray with all objects in the scene
     if(ray.index == -1) return backgroundCol;		 		//no intersection
 	obj = sceneObjects[ray.index];					 		//object on which the closest point of intersection is found
+	glm::vec3 baseColor = obj->getColor();
+
+	bool differentColour = false;
 
 	if (ray.index == 0)
 	{
 		int iz = (ray.hit.z < 0 ? -ray.hit.z + BOARD_WIDTH : ray.hit.z) / BOARD_WIDTH;
 		int ix = (ray.hit.x < 0 ? -ray.hit.x + BOARD_WIDTH : ray.hit.x) / BOARD_WIDTH;
 		int k = (iz % 2) ^ (ix % 2);
-		color = (k == 0) ? BOARD_PRIMARY_COLOUR : BOARD_SECONDARY_COLOUR;
+		baseColor = (k == 0) ? BOARD_PRIMARY_COLOUR : BOARD_SECONDARY_COLOUR;
 		// obj->setColor(color);
 
 		float x1 = -15.0;
@@ -79,13 +91,31 @@ glm::vec3 trace(Ray ray, int step)
 			// color = texture.getColorAt(texcoords, texcoordt);
 			// obj->setColor(color);
 		}
-		color = obj->lighting(lightPos, -ray.dir, ray.hit) * color;
+
+		differentColour = true;
+	}
+	else if (ray.index == 3)
+	{
+		glm::vec3 origin = glm::vec3(10, 10, -60);
+		glm::vec3 localHit = glm::normalize(ray.hit - origin);
+
+		float u = 0.5 + atan2(localHit.x, localHit.z) / (2 * PI); 
+		float v = 0.5 - asin(localHit.y) / PI;
+		
+		float mult = (sin((u + v) * 100) / 2.0) + 1;
+		baseColor = glm::vec3(mult, mult, mult);
+
+		differentColour = true;
+	}
+
+	if (differentColour)
+	{
+		color = obj->lighting(lightPos, -ray.dir, ray.hit, baseColor);
 	}
 	else
 	{
 		color = obj->lighting(lightPos, -ray.dir, ray.hit);						//Object's colour
 	}
-
 	
 	glm::vec3 lightVec = lightPos - ray.hit;
 	Ray shadowRay(ray.hit, lightVec);
@@ -98,18 +128,18 @@ glm::vec3 trace(Ray ray, int step)
 			glm::vec3 hitCol = hitObject->getColor();
 			color = glm::vec3(
 				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) *
-					(ray.index == 0 ? color.r : obj->getColor().r) + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.r)),
+					baseColor.r + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.r)),
 				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) *
-					(ray.index == 0 ? color.g : obj->getColor().g) + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.g)),
+					baseColor.g + ((1 - hitObject->getTransparencyCoeff()) * 0.5 * hitCol.g)),
 				hitObject->getTransparencyCoeff() * ((hitObject->getTransparencyCoeff()) *
-					(ray.index == 0 ? color.b : obj->getColor().b) + ((1 - hitObject->getReflectionCoeff()) * 0.5 * hitCol.b)));
+					baseColor.b + ((1 - hitObject->getReflectionCoeff()) * 0.5 * hitCol.b)));
 		}
 		else
 		{
 			color = glm::vec3(
-				0.2 * (ray.index == 0 ? color.r : obj->getColor().r),
-				0.2 * (ray.index == 0 ? color.g : obj->getColor().g),
-				0.2 * (ray.index == 0 ? color.b : obj->getColor().b));
+				0.2 * baseColor.r,
+				0.2 * baseColor.g,
+				0.2 * baseColor.b);
 		}
 	}
 
@@ -502,7 +532,6 @@ void initialize()
 
 	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, 0.0, -90.0), 15.0);
 	sphere1->setColor(glm::vec3(0, 0, 1));   //Set colour to blue
-	// sphere1->setSpecularity(false);
 	sphere1->setReflectivity(true, 0.8);
 	sceneObjects.push_back(sphere1);		 //Add sphere to scene objects
 
@@ -513,7 +542,7 @@ void initialize()
 	sceneObjects.push_back(sphere2);
 
 	Sphere *sphere3 = new Sphere(glm::vec3(10, 10, -60), 3.0);
-	sphere3->setColor(glm::vec3(0, 1, 1));
+	sphere3->setColor(glm::vec3(1, 1, 1));
 	sceneObjects.push_back(sphere3);
 
 	Sphere *sphere4 = new Sphere(glm::vec3(15, -10, -40), 5.0);
@@ -530,7 +559,7 @@ void initialize()
 	torus->setReflectivity(true, 0.4);
 	sceneObjects.push_back(torus);
 
-	drawCrystal(1.0f, glm::vec3(-7.5, -15, -35), colFromBytes(255, 0, 255));
+	// drawCrystal(1.0f, glm::vec3(-7.5, -15, -35), colFromBytes(255, 0, 255));
 }
 
 
