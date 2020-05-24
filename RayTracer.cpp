@@ -18,6 +18,7 @@
 #include "TextureBMP.h"
 #include "Torus.h"
 #include <thread>
+#include "Noise.h"
 using namespace std;
 
 #define colFromBytes(r, g, b) glm::vec3(r / 255.0f, g / 255.0f, b / 255.0f)
@@ -27,6 +28,8 @@ using namespace std;
 #define BOARD_PRIMARY_COLOUR glm::vec3(0.8, 0.8, 0.8)
 #define BOARD_SECONDARY_COLOUR glm::vec3(0.25, 0.25, 0.25)
 #define PI acos(-1)
+#define NOISE_WIDTH 1024
+#define NOISE_HEIGHT 1024
 
 const float WIDTH = 40.0;  
 const float HEIGHT = 40.0;
@@ -43,12 +46,8 @@ TextureBMP texture;
 bool traced = false;
 glm::vec3 pixels[NUMDIV][NUMDIV];
 
-float angleBetweenVectors(glm::vec3 a, glm::vec3 b, glm::vec3 origin)
-{
-	glm::vec3 an = glm::normalize(a - origin);
-	glm::vec3 bn = glm::normalize(b - origin);
-	return glm::acos(glm::dot(an, bn));
-}
+float **marbleNoise;
+glm::vec3 marbleColours[NOISE_WIDTH][NOISE_HEIGHT];
 
 //---The most important function in a ray tracer! ---------------------------------- 
 //   Computes the colour value obtained by tracing a ray and finding its 
@@ -76,8 +75,7 @@ glm::vec3 trace(Ray ray, int step)
 		int ix = (ray.hit.x < 0 ? -ray.hit.x + BOARD_WIDTH : ray.hit.x) / BOARD_WIDTH;
 		int k = (iz % 2) ^ (ix % 2);
 		baseColor = (k == 0) ? BOARD_PRIMARY_COLOUR : BOARD_SECONDARY_COLOUR;
-		// obj->setColor(color);
-
+		
 		float x1 = -15.0;
 		float x2 = 5.0;
 		float z1 = -60.0;
@@ -88,8 +86,7 @@ glm::vec3 trace(Ray ray, int step)
 		if (texcoords >= 0 && texcoords <= 1 &&
 			texcoordt >= 0 && texcoordt <= 1)
 		{
-			// color = texture.getColorAt(texcoords, texcoordt);
-			// obj->setColor(color);
+			// baseColor = texture.getColorAt(texcoords, texcoordt);
 		}
 
 		differentColour = true;
@@ -102,9 +99,10 @@ glm::vec3 trace(Ray ray, int step)
 		float u = 0.5 + atan2(localHit.x, localHit.z) / (2 * PI); 
 		float v = 0.5 - asin(localHit.y) / PI;
 		
-		float mult = (sin((u + v) * 100) / 2.0) + 1;
-		baseColor = glm::vec3(mult, mult, mult);
-
+		int xPixel = (int)glm::round(u * NOISE_WIDTH);
+		int yPixel = NOISE_HEIGHT - (int)glm::round(v * NOISE_HEIGHT);
+		baseColor = marbleColours[yPixel][xPixel] * baseColor;
+		
 		differentColour = true;
 	}
 
@@ -114,7 +112,7 @@ glm::vec3 trace(Ray ray, int step)
 	}
 	else
 	{
-		color = obj->lighting(lightPos, -ray.dir, ray.hit);						//Object's colour
+		color = obj->lighting(lightPos, -ray.dir, ray.hit);
 	}
 	
 	glm::vec3 lightVec = lightPos - ray.hit;
@@ -507,6 +505,35 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	sceneObjects.push_back(t4);
 }
 
+void generateMarble()
+{
+	marbleNoise = new float*[NOISE_HEIGHT];
+	
+	for (int i = 0; i < NOISE_HEIGHT; i++)
+	{
+		marbleNoise[i] = new float[NOISE_WIDTH];
+	}
+
+	generateNoise(marbleNoise, NOISE_WIDTH, NOISE_HEIGHT);
+
+	float xPeriod = 5.0;
+	float yPeriod = 10.0;
+	float turbPower = 2.0;
+	float turbSize = 128.0;
+	
+	for (int y = 0; y < NOISE_HEIGHT; y++)
+	{
+		for (int x = 0; x < NOISE_WIDTH; x++)
+		{
+			float xyValue = x * xPeriod / NOISE_WIDTH
+				+ y * yPeriod / NOISE_HEIGHT
+				+ turbPower * turbulence(marbleNoise, NOISE_WIDTH, NOISE_HEIGHT, x, y, turbSize) / 256.0;
+    		float sineValue = fabs(sin(xyValue * PI));
+			marbleColours[y][x] = glm::vec3(sineValue);
+		}
+	}
+}
+
 //---This function initializes the scene ------------------------------------------- 
 //   Specifically, it creates scene objects (spheres, planes, cones, cylinders etc)
 //     and add them to the list of scene objects.
@@ -519,6 +546,7 @@ void initialize()
     gluOrtho2D(XMIN, XMAX, YMIN, YMAX);
 
     glClearColor(0, 0, 0, 1);
+	generateMarble();
 
 	// texture = TextureBMP("Butterfly.bmp");
 
@@ -542,7 +570,7 @@ void initialize()
 	sceneObjects.push_back(sphere2);
 
 	Sphere *sphere3 = new Sphere(glm::vec3(10, 10, -60), 3.0);
-	sphere3->setColor(glm::vec3(1, 1, 1));
+	sphere3->setColor(glm::vec3(0, 0.5, 1));
 	sceneObjects.push_back(sphere3);
 
 	Sphere *sphere4 = new Sphere(glm::vec3(15, -10, -40), 5.0);
