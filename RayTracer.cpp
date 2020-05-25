@@ -133,10 +133,10 @@ glm::vec3 trace(Ray ray, int step)
 
 		if (localHit.y < height)
 		{
-			float sScale = 1.0f;
-			float tScale = 1.0f;
-			texcoords = 0.5 + atan2(ignoreY.x, ignoreY.z) / (2 * PI) * sScale;
-			texcoordt = localHit.y / height * tScale;
+			float sScale = 2.0f;
+			float tScale = 2.0f;
+			texcoords = fmod((0.5 + atan2(ignoreY.x, ignoreY.z) / (2 * PI)) * sScale, 1.0);
+			texcoordt = fmod(localHit.y / height * tScale, 1.0);
 
 			baseColor = bronzeAlbedo.getColorAt(texcoords, texcoordt);
 			// baseColor = glm::vec3(0.5);
