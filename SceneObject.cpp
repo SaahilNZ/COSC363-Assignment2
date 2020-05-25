@@ -131,6 +131,11 @@ bool SceneObject::isTransparent()
 	return tran_;
 }
 
+bool SceneObject::isPlanar()
+{
+	return planar_;
+}
+
 void SceneObject::setColor(glm::vec3 col)
 {
 	color_ = col;
@@ -178,4 +183,9 @@ void SceneObject::setTransparency(bool flag, float tran_coeff)
 {
 	tran_ = flag;
 	tranc_ = tran_coeff;
+}
+
+void SceneObject::setPlanar(bool flag)
+{
+	planar_ = flag;
 }
