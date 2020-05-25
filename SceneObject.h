@@ -18,7 +18,8 @@ typedef enum ObjectType {
 	GenericObject,
 	SphereObject,
 	PlaneObject,
-	TorusObject
+	TorusObject,
+	CylinderObject
 } ObjectType;
 
 class SceneObject 
@@ -44,6 +45,7 @@ public:
 	glm::vec3 lighting(glm::vec3 lightPos, glm::vec3 viewVec, glm::vec3 hit);
 	glm::vec3 lighting(glm::vec3 lightPos, glm::vec3 viewVec, glm::vec3 hit, glm::vec3 color);
 	glm::vec3 lighting(glm::vec3 lightPos, glm::vec3 viewVec, glm::vec3 hit, glm::vec3 color, glm::vec3 normalMap);
+	glm::vec3 normal(glm::vec3 pos, glm::vec3 normalMap);
 	void setColor(glm::vec3 col);
 	void setReflectivity(bool flag);
 	void setReflectivity(bool flag, float refl_coeff);

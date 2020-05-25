@@ -10,15 +10,17 @@
 #include <cmath>
 #include <vector>
 #include <glm/glm.hpp>
+#include <GL/freeglut.h>
+#include <thread>
+
+#include "Cylinder.h"
+#include "Noise.h"
+#include "Plane.h"
+#include "Ray.h"
 #include "Sphere.h"
 #include "SceneObject.h"
-#include "Ray.h"
-#include "Plane.h"
-#include <GL/freeglut.h>
 #include "TextureBMP.h"
 #include "Torus.h"
-#include <thread>
-#include "Noise.h"
 using namespace std;
 
 #define clamp(val, min, max) val < min ? min : (val > max ? max : val)
@@ -45,6 +47,9 @@ const float YMAX =  HEIGHT * 0.5;
 vector<SceneObject*> sceneObjects;
 TextureBMP brickAlbedo;
 TextureBMP brickNormal;
+TextureBMP bronzeAlbedo;
+TextureBMP bronzeNormal;
+TextureBMP bronzeMetallic;
 bool traced = false;
 bool exported = false;
 glm::vec3 pixels[NUMDIV][NUMDIV];
@@ -73,6 +78,10 @@ glm::vec3 trace(Ray ray, int step)
 	glm::vec3 baseColor = obj->getColor();
 
 	bool differentColour = false;
+	bool differentNormal = false;
+	bool differentMetallic = false;
+	TextureBMP normalBmp;
+	TextureBMP metallicBmp;
 
 	if (ray.index == 0)
 	{
@@ -97,6 +106,8 @@ glm::vec3 trace(Ray ray, int step)
 		// baseColor = glm::vec3(0.5);
 
 		differentColour = true;
+		differentNormal = true;
+		normalBmp = brickNormal;
 	}
 	else if (ray.index == 4)
 	{
@@ -112,13 +123,37 @@ glm::vec3 trace(Ray ray, int step)
 		
 		differentColour = true;
 	}
+	else if (ray.index == 5)
+	{
+		glm::vec3 origin = glm::vec3(-8, -15, -20);
+		float height = 12;
+		float radius = 2;
+		glm::vec3 localHit = ray.hit - origin;
+		glm::vec3 ignoreY = glm::vec3(localHit.x / radius, 0, localHit.z / radius);
+
+		if (localHit.y < height)
+		{
+			float sScale = 1.0f;
+			float tScale = 1.0f;
+			texcoords = 0.5 + atan2(ignoreY.x, ignoreY.z) / (2 * PI) * sScale;
+			texcoordt = localHit.y / height * tScale;
+
+			baseColor = bronzeAlbedo.getColorAt(texcoords, texcoordt);
+			// baseColor = glm::vec3(0.5);
+			differentColour = true;
+			differentNormal = true;
+			differentMetallic = true;
+			normalBmp = bronzeNormal;
+			metallicBmp = bronzeMetallic;
+		}
+	}
 
 	if (differentColour)
 	{
-		if (ray.index == 1)
+		if (differentNormal)
 		{
 			color = obj->lighting(lightPos, -ray.dir, ray.hit, baseColor,
-				brickNormal.getColorAt(texcoords, texcoordt));
+				normalBmp.getColorAt(texcoords, texcoordt));
 		}
 		else
 		{
@@ -159,7 +194,21 @@ glm::vec3 trace(Ray ray, int step)
 	if (obj->isReflective() && step < MAX_STEPS)
 	{
 		float rho = obj->getReflectionCoeff();
-		glm::vec3 normalVec = obj->normal(ray.hit);
+		if (differentMetallic)
+		{
+			rho = rho * (metallicBmp.getColorAt(texcoords, texcoordt)).r;
+		}
+		glm::vec3 normalVec(0);
+		if (differentNormal)
+		{
+			normalVec = obj->normal(ray.hit,
+				normalBmp.getColorAt(texcoords, texcoordt));
+		}
+		else
+		{
+			normalVec = obj->normal(ray.hit);
+		}
+		
 		glm::vec3 reflectedDir = glm::reflect(ray.dir, normalVec);
 		Ray reflectedRay(ray.hit, reflectedDir);
 		glm::vec3 reflectedColor = trace(reflectedRay, step + 1);
@@ -594,6 +643,9 @@ void initialize()
 	
 	brickAlbedo = TextureBMP("textures/brick_albedo.bmp");
 	brickNormal = TextureBMP("textures/brick_normal.bmp");
+	bronzeAlbedo = TextureBMP("textures/bronze_albedo.bmp");
+	bronzeNormal = TextureBMP("textures/bronze_normal.bmp");
+	bronzeMetallic = TextureBMP("textures/bronze_metallic.bmp");
 
 	Plane *plane = new Plane(glm::vec3(-200, -15, 0),
 							 glm::vec3(200, -15, 0),
@@ -626,6 +678,11 @@ void initialize()
 	sphere3->setColor(glm::vec3(0, 0.5, 1));
 	sceneObjects.push_back(sphere3);
 
+	Cylinder *cylinder = new Cylinder(glm::vec3(-9, -15, -20), 2, 12);
+	cylinder->setColor(colFromBytes(149, 116, 70));
+	cylinder->setReflectivity(true, 0.2);
+	sceneObjects.push_back(cylinder);
+
 	Sphere *sphere4 = new Sphere(glm::vec3(15, -10, -40), 5.0);
 	sphere4->setColor(glm::vec3(0, 1, 0));
 	sphere4->setTransparency(true, 0.8);
@@ -639,7 +696,7 @@ void initialize()
 	// torus->setRefractivity(true, 0.5, 1.5);
 	torus->setReflectivity(true, 0.4);
 	sceneObjects.push_back(torus);
-
+	
 	// drawCrystal(1.0f, glm::vec3(-7.5, -15, -35), colFromBytes(255, 0, 255));
 }
 
@@ -698,13 +755,10 @@ void exportTga()
 
 void keyboard(unsigned char key, int x, int y)
 {
-	cout << "key pressed" << endl;
 	if (key == ' ' )
 	{
-		cout << "spacebar pressed" << endl;
 		if (!exported)
 		{
-			cout << "not yet exported" << endl;
 			exportTga();
 			exported = true;
 		}
