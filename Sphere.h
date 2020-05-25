@@ -23,9 +23,9 @@ private:
     float radius = 1;
 
 public:
-	Sphere() {};  //Default constructor creates a unit sphere
+	Sphere() { this->type_ = SphereObject; };  //Default constructor creates a unit sphere
 
-	Sphere(glm::vec3 c, float r) : center(c), radius(r) {}
+	Sphere(glm::vec3 c, float r) : center(c), radius(r) { this->type_ = SphereObject; }
 
 	float intersect(glm::vec3 p0, glm::vec3 dir);
 

@@ -183,9 +183,9 @@ glm::vec3 trace(Ray ray, int step)
 		Ray refrRay(ray.hit, g);
 		refrRay.closestPt(sceneObjects);
 
-		if (obj->isPlanar())
+		if (obj->getType() == PlaneObject)
 		{
-			if (refrRay.index > -1 && sceneObjects[refrRay.index]->isPlanar())
+			if (refrRay.index > -1 && sceneObjects[refrRay.index]->getType() == PlaneObject)
 			{
 				if (sceneObjects[refrRay.index]->isRefractive())
 				{
@@ -328,7 +328,6 @@ void drawCube()
 	cubeBottom->setColor(glm::vec3(1, 0, 0));
 	cubeBottom->setRefractivity(true, 0.5, 1.03);
 	cubeBottom->setReflectivity(true, 0.8);
-	cubeBottom->setPlanar(true);
 	sceneObjects.push_back(cubeBottom);
 	Plane *cubeTop = new Plane(glm::vec3(-15, -5, -50),
 							   glm::vec3(-5, -5, -50),
@@ -337,7 +336,6 @@ void drawCube()
 	cubeTop->setColor(glm::vec3(1, 0, 0));
 	cubeTop->setRefractivity(true, 0.5, 1.03);
 	cubeTop->setReflectivity(true, 0.8);
-	cubeTop->setPlanar(true);
 	sceneObjects.push_back(cubeTop);
 	Plane *cubeBack = new Plane(glm::vec3(-15, -15, -60),
 							   glm::vec3(-5, -15, -60),
@@ -346,7 +344,6 @@ void drawCube()
 	cubeBack->setColor(glm::vec3(1, 0, 0));
 	cubeBack->setRefractivity(true, 0.5, 1.03);
 	cubeBack->setReflectivity(true, 0.8);
-	cubeBack->setPlanar(true);
 	sceneObjects.push_back(cubeBack);
 	Plane *cubeFront = new Plane(glm::vec3(-15, -15, -50),
 							   glm::vec3(-5, -15, -50),
@@ -355,7 +352,6 @@ void drawCube()
 	cubeFront->setColor(glm::vec3(1, 0, 0));
 	cubeFront->setRefractivity(true, 0.5, 1.03);
 	cubeFront->setReflectivity(true, 0.8);
-	cubeFront->setPlanar(true);
 	sceneObjects.push_back(cubeFront);
 	Plane *cubeLeft = new Plane(glm::vec3(-15, -15, -50),
 							   glm::vec3(-15, -15, -60),
@@ -364,7 +360,6 @@ void drawCube()
 	cubeLeft->setColor(glm::vec3(1, 0, 0));
 	cubeLeft->setRefractivity(true, 0.5, 1.03);
 	cubeLeft->setReflectivity(true, 0.8);
-	cubeLeft->setPlanar(true);
 	Plane *cubeRight = new Plane(glm::vec3(-5, -15, -50),
 							   glm::vec3(-5, -15, -60),
 							   glm::vec3(-5, -5, -60),
@@ -372,7 +367,6 @@ void drawCube()
 	cubeRight->setColor(glm::vec3(1, 0, 0));
 	cubeRight->setRefractivity(true, 0.5, 1.03);
 	cubeRight->setReflectivity(true, 0.8);
-	cubeRight->setPlanar(true);
 	sceneObjects.push_back(cubeRight);
 }
 
@@ -390,7 +384,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	);
 	b1->setColor(colour);
 	b1->setReflectivity(true, reflectionCoeff);
-	b1->setPlanar(true);
 	b1->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(b1);
 
@@ -401,7 +394,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	);
 	b2->setColor(colour);
 	b2->setReflectivity(true, reflectionCoeff);
-	b2->setPlanar(true);
 	b2->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(b2);
 	
@@ -412,7 +404,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	);
 	b3->setColor(colour);
 	b3->setReflectivity(true, reflectionCoeff);
-	b3->setPlanar(true);
 	b3->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(b3);
 
@@ -423,7 +414,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	);
 	b4->setColor(colour);
 	b4->setReflectivity(true, reflectionCoeff);
-	b4->setPlanar(true);
 	b4->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(b4);
 
@@ -435,7 +425,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	);
 	l1->setColor(colour);
 	l1->setReflectivity(true, reflectionCoeff);
-	l1->setPlanar(true);
 	l1->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(l1);
 
@@ -446,7 +435,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	);
 	l2->setColor(colour);
 	l2->setReflectivity(true, reflectionCoeff);
-	l2->setPlanar(true);
 	l2->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(l2);
 
@@ -457,7 +445,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	);
 	l3->setColor(colour);
 	l3->setReflectivity(true, reflectionCoeff);
-	l3->setPlanar(true);
 	l3->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(l3);
 
@@ -468,7 +455,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 	);
 	l4->setColor(colour);
 	l4->setReflectivity(true, reflectionCoeff);
-	l4->setPlanar(true);
 	l4->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(l4);
 
@@ -480,7 +466,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 		location + glm::vec3(-scale, 7 * scale, 0)
 	);
 	u1->setColor(colour);
-	u1->setPlanar(true);
 	u1->setReflectivity(true, reflectionCoeff);
 	u1->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(u1);
@@ -492,7 +477,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 		location + glm::vec3(0, 7 * scale, scale)
 	);
 	u2->setColor(colour);
-	u2->setPlanar(true);
 	u2->setReflectivity(true, reflectionCoeff);
 	u2->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(u2);
@@ -504,7 +488,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 		location + glm::vec3(0, 7 * scale, -scale)
 	);
 	u3->setColor(colour);
-	u3->setPlanar(true);
 	u3->setReflectivity(true, reflectionCoeff);
 	u3->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(u3);
@@ -516,7 +499,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 		location + glm::vec3(scale, 7 * scale, 0)
 	);
 	u4->setColor(colour);
-	u4->setPlanar(true);
 	u4->setReflectivity(true, reflectionCoeff);
 	u4->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(u4);
@@ -529,7 +511,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 		location + glm::vec3(-0.5 * scale, 8.5 * scale, 0.5 * scale)
 	);
 	t1->setColor(colour);
-	t1->setPlanar(true);
 	t1->setReflectivity(true, reflectionCoeff);
 	t1->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(t1);
@@ -541,7 +522,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 		location + glm::vec3(0.5 * scale, 8.5 * scale, -0.5 * scale)
 	);
 	t2->setColor(colour);
-	t2->setPlanar(true);
 	t2->setReflectivity(true, reflectionCoeff);
 	t2->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(t2);
@@ -553,7 +533,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 		location + glm::vec3(-0.5 * scale, 8.5 * scale, -0.5 * scale)
 	);
 	t3->setColor(colour);
-	t3->setPlanar(true);
 	t3->setReflectivity(true, reflectionCoeff);
 	t3->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(t3);
@@ -565,7 +544,6 @@ void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
 		location + glm::vec3(0.5 * scale, 8.5 * scale, 0.5 * scale)
 	);
 	t4->setColor(colour);
-	t4->setPlanar(true);
 	t4->setReflectivity(true, reflectionCoeff);
 	t4->setRefractivity(true, refractionCoeff, refractiveIndex);
 	sceneObjects.push_back(t4);
@@ -623,7 +601,6 @@ void initialize()
 							 glm::vec3(-200, -15, -400));
 	plane->setSpecularity(false);
 	plane->setReflectivity(true, 0.25);
-	plane->setPlanar(true);
 	sceneObjects.push_back(plane);
 	
 	Plane *brickWall = new Plane(glm::vec3(-200, -15, -150),
@@ -632,7 +609,6 @@ void initialize()
 								 glm::vec3(-200, 35, -150));
 	brickWall->setColor(glm::vec3(1, 0.8, 0));
 	brickWall->setSpecularity(false);
-	brickWall->setPlanar(true);
 	sceneObjects.push_back(brickWall);
 
 	Sphere *sphere1 = new Sphere(glm::vec3(-5.0, 0.0, -90.0), 15.0);

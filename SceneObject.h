@@ -14,6 +14,12 @@
 #define H_SOBJECT
 #include <glm/glm.hpp>
 
+typedef enum ObjectType {
+	GenericObject,
+	SphereObject,
+	PlaneObject,
+	TorusObject
+} ObjectType;
 
 class SceneObject 
 {
@@ -23,12 +29,12 @@ protected:
 	bool refr_ = false;  //refractivity: true/false
 	bool spec_ = true;   //specularity: true/false
 	bool tran_ = false;  //transparency: true/false
-	bool planar_ = false; // planar: true/false
 	float reflc_ = 0.8;  //coefficient of reflection
 	float refrc_ = 0.8;  //coefficient of refraction
 	float tranc_ = 0.8;  //coefficient of transparency
 	float refri_ = 1.0;  //refractive index
 	float shin_ = 50.0; //shininess
+	ObjectType type_ = GenericObject;
 public:
 	SceneObject() {}
     virtual float intersect(glm::vec3 p0, glm::vec3 dir) = 0;
@@ -47,18 +53,17 @@ public:
 	void setSpecularity(bool flag);
 	void setTransparency(bool flag);
 	void setTransparency(bool flag, float tran_coeff);
-	void setPlanar(bool flag);
 	glm::vec3 getColor();
 	float getReflectionCoeff();
 	float getRefractionCoeff();
 	float getTransparencyCoeff();
 	float getRefractiveIndex();
 	float getShininess();
+	ObjectType getType();
 	bool isReflective();
 	bool isRefractive();
 	bool isSpecular();
 	bool isTransparent();
-	bool isPlanar();
 };
 
 #endif

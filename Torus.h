@@ -24,9 +24,9 @@ private:
     float minorRadius = 0.5;
 
 public:
-    Torus() {};
+    Torus() { this->type_ = TorusObject; };
 
-    Torus(glm::vec3 c, float majR, float minR) : center(c), majorRadius(majR), minorRadius(minR) {}
+    Torus(glm::vec3 c, float majR, float minR) : center(c), majorRadius(majR), minorRadius(minR) { this->type_ = TorusObject; }
 
 	float intersect(glm::vec3 p0, glm::vec3 dir);
 

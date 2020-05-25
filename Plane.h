@@ -25,10 +25,10 @@ public:
 	Plane() = default;
 	
 	Plane(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc, glm::vec3 pd) : 
-		a_(pa), b_(pb), c_(pc), d_(pd), nverts_(4) {}
+		a_(pa), b_(pb), c_(pc), d_(pd), nverts_(4) { this->type_ = PlaneObject; }
 
 	Plane(glm::vec3 pa, glm::vec3 pb, glm::vec3 pc) :
-		a_(pa), b_(pb), c_(pc),  nverts_(3) {}
+		a_(pa), b_(pb), c_(pc),  nverts_(3) { this->type_ = PlaneObject; }
 
 
 	bool isInside(glm::vec3 pt);
