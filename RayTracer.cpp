@@ -119,7 +119,11 @@ glm::vec3 trace(Ray ray, int step)
 		
 		int xPixel = (int)glm::round(texcoords * NOISE_WIDTH);
 		int yPixel = NOISE_HEIGHT - (int)glm::round(texcoordt * NOISE_HEIGHT);
-		baseColor = marbleColours[yPixel][xPixel] * baseColor;
+		glm::vec3 col1 = colFromBytes(255, 108, 89);
+		glm::vec3 col2 = colFromBytes(104, 39, 0);
+		float frac = marbleColours[yPixel][xPixel].r;
+		baseColor = (col1 * frac) + (col2 * (1 - frac));
+		// baseColor = marbleColours[yPixel][xPixel] * baseColor;
 		
 		differentColour = true;
 	}
