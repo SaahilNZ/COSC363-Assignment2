@@ -6,9 +6,6 @@
 *  methods intersect() and normal().
 -------------------------------------------------------------*/
 
-//https://www.researchgate.net/post/Dou_you_know_an_analytical_way_to_compute_the_intersection_beetween_a_line_and_a_torus
-//https://www.cl.cam.ac.uk/teaching/1999/AGraphHCI/SMAG/node2.html
-
 #include "Torus.h"
 #include <math.h>
 #include "Roots3And4.h"
