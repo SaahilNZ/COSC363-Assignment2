@@ -34,6 +34,7 @@ using namespace std;
 #define NOISE_WIDTH 1024
 #define NOISE_HEIGHT 1024
 
+const bool ENABLE_AA = false;
 const float WIDTH = 40.0;  
 const float HEIGHT = 40.0;
 const float EDIST = 40.0;
@@ -119,8 +120,10 @@ glm::vec3 trace(Ray ray, int step)
 		
 		int xPixel = (int)glm::round(texcoords * NOISE_WIDTH);
 		int yPixel = NOISE_HEIGHT - (int)glm::round(texcoordt * NOISE_HEIGHT);
-		glm::vec3 col1 = colFromBytes(255, 108, 89);
-		glm::vec3 col2 = colFromBytes(104, 39, 0);
+		// glm::vec3 col1 = colFromBytes(255, 108, 89);
+		// glm::vec3 col2 = colFromBytes(104, 39, 0);
+		glm::vec3 col1 = baseColor;
+		glm::vec3 col2(0, 1, 1);
 		float frac = marbleColours[yPixel][xPixel].r;
 		baseColor = (col1 * frac) + (col2 * (1 - frac));
 		// baseColor = marbleColours[yPixel][xPixel] * baseColor;
@@ -295,24 +298,34 @@ void traceScene()
 			{
 				yp = YMIN + y*cellY;
 
-				glm::vec3 dir1(xp+0.25*cellX, yp+0.25*cellY, -EDIST);
-				glm::vec3 dir2(xp+0.25*cellX, yp+0.75*cellY, -EDIST);
-				glm::vec3 dir3(xp+0.75*cellX, yp+0.25*cellY, -EDIST);
-				glm::vec3 dir4(xp+0.75*cellX, yp+0.75*cellY, -EDIST);
+				if (ENABLE_AA)
+				{
+					glm::vec3 dir1(xp+0.25*cellX, yp+0.25*cellY, -EDIST);
+					glm::vec3 dir2(xp+0.25*cellX, yp+0.75*cellY, -EDIST);
+					glm::vec3 dir3(xp+0.75*cellX, yp+0.25*cellY, -EDIST);
+					glm::vec3 dir4(xp+0.75*cellX, yp+0.75*cellY, -EDIST);
 
-				Ray ray1 = Ray(eye, dir1);
-				Ray ray2 = Ray(eye, dir2);
-				Ray ray3 = Ray(eye, dir3);
-				Ray ray4 = Ray(eye, dir4);
+					Ray ray1 = Ray(eye, dir1);
+					Ray ray2 = Ray(eye, dir2);
+					Ray ray3 = Ray(eye, dir3);
+					Ray ray4 = Ray(eye, dir4);
 
-				glm::vec3 col1 = trace (ray1, 1);
-				glm::vec3 col2 = trace (ray2, 1);
-				glm::vec3 col3 = trace (ray3, 1);
-				glm::vec3 col4 = trace (ray4, 1);
+					glm::vec3 col1 = trace (ray1, 1);
+					glm::vec3 col2 = trace (ray2, 1);
+					glm::vec3 col3 = trace (ray3, 1);
+					glm::vec3 col4 = trace (ray4, 1);
 
-				pixels[x][y] = glm::vec3((col1.r + col2.r + col3.r + col4.r) / 4.0,
-										 (col1.g + col2.g + col3.g + col4.g) / 4.0,
-										 (col1.b + col2.b + col3.b + col4.b) / 4.0);
+					pixels[x][y] = glm::vec3((col1.r + col2.r + col3.r + col4.r) / 4.0,
+											(col1.g + col2.g + col3.g + col4.g) / 4.0,
+											(col1.b + col2.b + col3.b + col4.b) / 4.0);
+				}
+				else
+				{
+					glm::vec3 dir(xp+0.5*cellX, yp+0.5*cellY, -EDIST);
+					Ray ray = Ray(eye, dir);
+					glm::vec3 col = trace(ray, 1);
+					pixels[x][y] = col;
+				}
 			}
 		}
 	};
@@ -421,185 +434,6 @@ void drawCube()
 	cubeRight->setRefractivity(true, 0.5, 1.03);
 	cubeRight->setReflectivity(true, 0.8);
 	sceneObjects.push_back(cubeRight);
-}
-
-void drawCrystal(float scale, glm::vec3 location, glm::vec3 colour)
-{
-	float reflectionCoeff = 0.6;
-	float refractionCoeff = 0.3;
-	float refractiveIndex = 1.05;
-
-	// bottom planes
-	Plane *b1 = new Plane(
-		location,
-		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale)
-	);
-	b1->setColor(colour);
-	b1->setReflectivity(true, reflectionCoeff);
-	b1->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(b1);
-
-	Plane *b2 = new Plane(
-		location,
-		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale),
-		location + glm::vec3(0.5 * scale, scale, -0.5 * scale)
-	);
-	b2->setColor(colour);
-	b2->setReflectivity(true, reflectionCoeff);
-	b2->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(b2);
-	
-	Plane *b3 = new Plane(
-		location,
-		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale)
-	);
-	b3->setColor(colour);
-	b3->setReflectivity(true, reflectionCoeff);
-	b3->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(b3);
-
-	Plane *b4 = new Plane(
-		location,
-		location + glm::vec3(0.5 * scale, scale, -0.5 * scale),
-		location + glm::vec3(0.5 * scale, scale, 0.5 * scale)
-	);
-	b4->setColor(colour);
-	b4->setReflectivity(true, reflectionCoeff);
-	b4->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(b4);
-
-	// lower planes
-	Plane *l1 = new Plane(
-		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(0, 7 * scale, scale)
-	);
-	l1->setColor(colour);
-	l1->setReflectivity(true, reflectionCoeff);
-	l1->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(l1);
-
-	Plane *l2 = new Plane(
-		location + glm::vec3(0.5 * scale, scale, -0.5 * scale),
-		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale),
-		location + glm::vec3(0, 7 * scale,  -scale)
-	);
-	l2->setColor(colour);
-	l2->setReflectivity(true, reflectionCoeff);
-	l2->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(l2);
-
-	Plane *l3 = new Plane(
-		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale),
-		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(-scale, 7 * scale, 0)
-	);
-	l3->setColor(colour);
-	l3->setReflectivity(true, reflectionCoeff);
-	l3->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(l3);
-
-	Plane *l4 = new Plane(
-		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(0.5 * scale, scale, -0.5 * scale),
-		location + glm::vec3(scale, 7 * scale,  0)
-	);
-	l4->setColor(colour);
-	l4->setReflectivity(true, reflectionCoeff);
-	l4->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(l4);
-
-	// upper planes
-	Plane *u1 = new Plane(
-		location + glm::vec3(-0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(0, 7 * scale, scale),
-		location + glm::vec3(-0.5 * scale, 8.5 * scale, 0.5 * scale),
-		location + glm::vec3(-scale, 7 * scale, 0)
-	);
-	u1->setColor(colour);
-	u1->setReflectivity(true, reflectionCoeff);
-	u1->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(u1);
-	
-	Plane *u2 = new Plane(
-		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(scale, 7 * scale, 0),
-		location + glm::vec3(0.5 * scale, 8.5 * scale, 0.5 * scale),
-		location + glm::vec3(0, 7 * scale, scale)
-	);
-	u2->setColor(colour);
-	u2->setReflectivity(true, reflectionCoeff);
-	u2->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(u2);
-	
-	Plane *u3 = new Plane(
-		location + glm::vec3(-0.5 * scale, scale, -0.5 * scale),
-		location + glm::vec3(-scale, 7 * scale, 0),
-		location + glm::vec3(-0.5 * scale, 8.5 * scale, -0.5 * scale),
-		location + glm::vec3(0, 7 * scale, -scale)
-	);
-	u3->setColor(colour);
-	u3->setReflectivity(true, reflectionCoeff);
-	u3->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(u3);
-	
-	Plane *u4 = new Plane(
-		location + glm::vec3(0.5 * scale, scale, 0.5 * scale),
-		location + glm::vec3(0, 7 * scale, -scale),
-		location + glm::vec3(0.5 * scale, 8.5 * scale, -0.5 * scale),
-		location + glm::vec3(scale, 7 * scale, 0)
-	);
-	u4->setColor(colour);
-	u4->setReflectivity(true, reflectionCoeff);
-	u4->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(u4);
-
-	// top planes
-	Plane *t1 = new Plane(
-		location + glm::vec3(0, 7 * scale, scale),
-		location + glm::vec3(0.5 * scale, 8.5 * scale, 0.5 * scale),
-		location + glm::vec3(0, 9.5 * scale, 0),
-		location + glm::vec3(-0.5 * scale, 8.5 * scale, 0.5 * scale)
-	);
-	t1->setColor(colour);
-	t1->setReflectivity(true, reflectionCoeff);
-	t1->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(t1);
-	
-	Plane *t2 = new Plane(
-		location + glm::vec3(0, 7 * scale, -scale),
-		location + glm::vec3(-0.5 * scale, 8.5 * scale, -0.5 * scale),
-		location + glm::vec3(0, 9.5 * scale, 0),
-		location + glm::vec3(0.5 * scale, 8.5 * scale, -0.5 * scale)
-	);
-	t2->setColor(colour);
-	t2->setReflectivity(true, reflectionCoeff);
-	t2->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(t2);
-
-	Plane *t3 = new Plane(
-		location + glm::vec3(-scale, 7 * scale, 0),
-		location + glm::vec3(-0.5 * scale, 8.5 * scale, 0.5 * scale),
-		location + glm::vec3(0, 9.5 * scale, 0),
-		location + glm::vec3(-0.5 * scale, 8.5 * scale, -0.5 * scale)
-	);
-	t3->setColor(colour);
-	t3->setReflectivity(true, reflectionCoeff);
-	t3->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(t3);
-	
-	Plane *t4 = new Plane(
-		location + glm::vec3(scale, 7 * scale, 0),
-		location + glm::vec3(0.5 * scale, 8.5 * scale, -0.5 * scale),
-		location + glm::vec3(0, 9.5 * scale, 0),
-		location + glm::vec3(0.5 * scale, 8.5 * scale, 0.5 * scale)
-	);
-	t4->setColor(colour);
-	t4->setReflectivity(true, reflectionCoeff);
-	t4->setRefractivity(true, refractionCoeff, refractiveIndex);
-	sceneObjects.push_back(t4);
 }
 
 void generateMarble()
