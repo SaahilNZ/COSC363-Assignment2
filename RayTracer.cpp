@@ -34,7 +34,7 @@ using namespace std;
 #define NOISE_WIDTH 1024
 #define NOISE_HEIGHT 1024
 
-const bool ENABLE_AA = false;
+const bool ENABLE_AA = true;
 const float WIDTH = 40.0;  
 const float HEIGHT = 40.0;
 const float EDIST = 40.0;
